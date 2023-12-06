@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Discord CDN URL Analyzer</title>
+        <link href="css/tailwind.min.css" rel="stylesheet" />
+        <style>
+            .hash-box {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                cursor: pointer;
+            }
+
+            .expanded {
+                overflow-wrap: break-word;
+                white-space: normal;
+            }
+        </style>
+    </head>
+    <body class="bg-gray-100 h-screen flex items-center justify-center">
+        <div class="bg-white p-8 rounded-lg shadow-md w-96">
+            <h1 class="text-2xl font-semibold mb-4">Discord CDN URL Analyzer</h1>
+
+            <div class="mb-4">
+                <label for="cdnUrl" class="block text-sm font-medium text-gray-700">Discord CDN URL:</label>
+                <input type="text" id="cdnUrl" class="mt-1 p-2 w-full border rounded" />
+            </div>
+
+            <button onclick="analyzeUrl()" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 cursor-pointer">Analyze</button>
+
+            <div id="result" class="mt-8 grid grid-cols-2 gap-4">
+                <!-- Result will be displayed here -->
+            </div>
+        </div>
+
+        <script>
+            function analyzeUrl() {
+                const cdnUrl = document.getElementById("cdnUrl").value;
+
+                // Extracting parameters from the URL
+                const urlParams = new URLSearchParams(cdnUrl.split("?")[1]);
+                const ex = urlParams.get("ex");
+                const is = urlParams.get("is");
+                const hm = urlParams.get("hm");
+
+                // Format timestamps
+                const issuedDate = formatTimestamp(is);
+                const expirationDate = formatTimestamp(ex);
+
+                // Check if the expiration date has passed
+                const isExpired = new Date().getTime() > parseInt(ex, 16) * 1000;
+
+                // Extracting the file name
+                const fileName = getFileName(cdnUrl);
+
+                // Displaying the result in a 2x2 grid
+                const resultDiv = document.getElementById("result");
+                resultDiv.innerHTML = `
+        <div class="col-span-1 text-center">
+          <p class="text-sm font-semibold">File Name:</p>
+          <p class="text-sm">${fileName}</p>
+        </div>
+        <div class="col-span-1 text-center">
+          <p class="text-sm font-semibold">File Signature:</p>
+          <div class="hash-box" onclick="toggleSignature(this)">${hm}</div>
+        </div>
+        <div class="col-span-1 text-center">
+          <p class="text-sm font-semibold">Signature Issued:</p>
+          <div class="text-sm">${issuedDate}</div>
+        </div>
+        <div class="col-span-1 text-center">
+          <p class="text-sm font-semibold">Signature Expiring:</p>
+          <p class="text-sm ${isExpired ? "text-red-500" : "text-green-500"}">${expirationDate}</p>
+        </div>
+      `;
+            }
+
+            function formatTimestamp(timestamp) {
+                const date = new Date(parseInt(timestamp, 16) * 1000);
+                return date.toLocaleString();
+            }
+
+            function getFileName(url) {
+                const parts = url.split("/");
+                const fileNameWithExtension = parts[parts.length - 1];
+                return fileNameWithExtension.split("?")[0];
+            }
+
+            function toggleSignature(element) {
+                element.classList.toggle("expanded");
+            }
+        </script>
+    </body>
+</html>
